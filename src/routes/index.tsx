@@ -148,19 +148,19 @@ function Index() {
       <aside id="verification-sidebar" inert={!sidebarOpen} className={`fixed bottom-0 left-0 top-16 z-40 overflow-hidden border-r border-slate-line bg-surface-low px-0 py-6 transition-[width,transform] duration-300 motion-reduce:transition-none ${sidebarOpen ? "w-72 translate-x-0" : "w-0 -translate-x-full border-r-0"}`}>
         <div className="flex w-72 flex-col gap-6 px-2">
           <div className="px-2 pt-3">
-            <button
+            <Button variant="ghost"
               onClick={reset}
-              className="flex w-full items-center justify-center gap-3 rounded-xl bg-primary px-6 py-3 text-sm font-semibold tracking-wide text-primary-foreground shadow-[0_1px_8px_oklch(0.69_0.17_155/0.2)] transition-all hover:bg-primary-container"
+              className="flex w-full items-center justify-center gap-3 rounded-xl bg-primary px-6 py-3 text-sm font-semibold tracking-wide text-primary-foreground shadow-sm transition-all hover:bg-primary-container"
             >
               <Icon name="add" className="text-[20px]" />
               Nouvelle vérification
-            </button>
+            </Button>
           </div>
           <div className="flex flex-col gap-2 px-2">
             <span className="px-2 text-sm font-semibold uppercase tracking-wider text-outline">Enquêtes Récentes</span>
             <nav className="flex flex-col gap-2">
               {recent.map((r, i) => (
-                <button
+                <Button variant="ghost"
                   key={r}
                   onClick={() => { setActive(i); setShowExample(true); setSent([]); }}
                   className={`truncate rounded-lg px-3 py-3 text-left text-base transition-colors ${
@@ -168,7 +168,7 @@ function Index() {
                   }`}
                 >
                   {r}
-                </button>
+                </Button>
               ))}
             </nav>
           </div>
@@ -226,7 +226,7 @@ function Index() {
 
               <div className="mr-auto flex w-full max-w-4xl items-start gap-3">
                 <div className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-md">
-                  <Icon name="policy" className="text-[22px]" />
+                  <Icon name="smart_toy" className="text-[22px]" />
                 </div>
                 <div className="flex w-full flex-col gap-6 pt-1">
                   <div className="flex flex-col gap-4 leading-relaxed">
@@ -264,21 +264,21 @@ function Index() {
                   </div>
 
                   <div className="flex items-center gap-1 border-t border-slate-line/60 pt-1">
-                    <button onClick={copy} className={actionBtn}>
+                    <Button variant="ghost" onClick={copy} className={actionBtn}>
                       <Icon name={copied ? "check" : "content_copy"} className="text-[18px]" />
                       {copied ? "Copié !" : "Copier"}
-                    </button>
-                    <button onClick={share} className={actionBtn}>
+                    </Button>
+                    <Button variant="ghost" onClick={share} className={actionBtn}>
                       <Icon name="share" className="text-[18px]" />
                       Diffuser
-                    </button>
+                    </Button>
                     <div className="mx-1 h-4 w-px bg-slate-line" />
-                    <button onClick={() => setVote("up")} title="Réponse utile" className={`rounded-lg p-1.5 hover:bg-surface-low hover:text-primary ${vote === "up" ? "text-primary" : "text-on-variant"}`}>
+                    <Button variant="ghost" onClick={() => setVote("up")} title="Réponse utile" className={`rounded-lg p-1.5 hover:bg-surface-low hover:text-primary ${vote === "up" ? "text-primary" : "text-on-variant"}`}>
                       <Icon name="thumb_up" className="text-[18px]" />
-                    </button>
-                    <button onClick={() => setVote("down")} title="Réponse inexacte" className={`rounded-lg p-1.5 hover:bg-surface-low hover:text-destructive ${vote === "down" ? "text-destructive" : "text-on-variant"}`}>
+                    </Button>
+                    <Button variant="ghost" onClick={() => setVote("down")} title="Réponse inexacte" className={`rounded-lg p-1.5 hover:bg-surface-low hover:text-destructive ${vote === "down" ? "text-destructive" : "text-on-variant"}`}>
                       <Icon name="thumb_down" className="text-[18px]" />
-                    </button>
+                    </Button>
                   </div>
 
                   <details className="group overflow-hidden rounded-xl border border-slate-line bg-surface-lowest">
@@ -325,7 +325,7 @@ function Index() {
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-md">
-                      <Icon name="policy" className="text-[22px]" />
+                      <Icon name="smart_toy" className="text-[22px]" />
                     </div>
                     <p className="text-on-variant">Demande reçue avec votre image et votre texte. La vérification automatique n’est pas encore connectée.</p>
                   </div>
@@ -342,17 +342,17 @@ function Index() {
                     <div key={c.id} className="flex items-center gap-2 rounded-full bg-surface-lowest px-3 py-1 text-[13px] font-semibold shadow-sm">
                       <img src={c.src} alt="Image jointe" className="h-8 w-8 rounded object-cover" />
                       <span className="max-w-[200px] truncate">{c.text}</span>
-                      <button aria-label={`Retirer ${c.text}`} onClick={() => setChips((cs) => cs.filter((x) => x.id !== c.id))} className="flex items-center hover:text-destructive">
+                      <Button variant="ghost" aria-label={`Retirer ${c.text}`} onClick={() => setChips((cs) => cs.filter((x) => x.id !== c.id))} className="flex items-center hover:text-destructive">
                         <Icon name="close" className="text-[16px]" />
-                      </button>
+                      </Button>
                     </div>
                   ))}
-                  <button onClick={() => setChips([])} className="text-[12px] font-semibold text-outline hover:text-foreground">
+                  <Button variant="ghost" onClick={() => setChips([])} className="text-[12px] font-semibold text-outline hover:text-foreground">
                     Effacer les pièces jointes
-                  </button>
+                  </Button>
                 </div>
               )}
-              <div className="relative flex flex-col rounded-2xl border border-slate-line bg-surface-lowest p-2 shadow-lg transition-all focus-within:border-primary focus-within:shadow-[0_4px_20px_oklch(0.69_0.17_155/0.14)]">
+              <div className="relative flex flex-col rounded-2xl border border-slate-line bg-surface-lowest p-2 shadow-lg transition-all focus-within:border-primary focus-within:shadow-sm">
                 <textarea
                   rows={2}
                   value={input}
@@ -366,10 +366,10 @@ function Index() {
                 />
                 <div className="flex items-center justify-between gap-2 px-1 pt-1">
                   <div className="flex items-center gap-1">
-                    <button className={toolBtn} aria-label="Téléverser une image" title="Téléverser une image (PNG, JPG)" onClick={() => fileRef.current?.click()}>
+                    <Button variant="ghost" className={toolBtn} aria-label="Téléverser une image" title="Téléverser une image (PNG, JPG)" onClick={() => fileRef.current?.click()}>
                       <Icon name="attach_file" className="text-[20px]" />
-                    </button>
-                    <button
+                    </Button>
+                    <Button variant="ghost"
                       className={toolBtn}
                       title="Joindre une image par URL"
                       aria-label="Joindre une image par URL"
@@ -377,13 +377,13 @@ function Index() {
                       disabled={validatingImage}
                     >
                       <Icon name="link" className="text-[20px]" />
-                    </button>
+                    </Button>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="hidden text-[11px] font-semibold text-outline sm:inline">Image + texte requis</span>
-                    <button onClick={submit} disabled={!canSend} aria-label="Envoyer" title="Envoyer" className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-container text-primary-foreground shadow-sm transition-all hover:scale-105 hover:bg-primary active:scale-95">
+                    <Button variant="ghost" onClick={submit} disabled={!canSend} aria-label="Envoyer" title="Envoyer" className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-container text-primary-foreground shadow-sm transition-all hover:scale-105 hover:bg-primary active:scale-95">
                       <Icon name="arrow_upward" className="text-[18px]" />
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </div>
