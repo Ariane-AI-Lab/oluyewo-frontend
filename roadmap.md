@@ -1,0 +1,3 @@
+- [x] Clean white conversation area and navigation; add smooth sidebar collapse.
+- [x] Add welcome state, mandatory image-plus-text validation, and remove microphone.
+- [x] Update robot avatars and inline citations; verify controls and submission rules.
