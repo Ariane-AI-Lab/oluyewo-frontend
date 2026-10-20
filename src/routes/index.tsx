@@ -239,6 +239,7 @@ function Index() {
                   <div className="flex flex-wrap justify-center gap-5 text-sm text-on-variant">
                     <span className="inline-flex items-center gap-2"><Icon name="image" className="text-[18px] text-primary" />Image : fichier ou URL</span>
                     <span className="inline-flex items-center gap-2"><Icon name="notes" className="text-[18px] text-primary" />Rumeur / texte</span>
+                    <button onClick={() => setShowExample(true)} className="inline-flex items-center gap-2 font-semibold text-primary hover:underline"><Icon name="visibility" className="text-[18px]" />Voir un exemple</button>
                   </div>
                 </div>
               )}
@@ -273,7 +274,7 @@ function Index() {
                   </div>
                   <span className="text-[11px] font-semibold text-outline">Envoyé via Web Client • 14:32</span>
                 </div>
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary text-[13px] font-semibold text-secondary-foreground shadow-sm">EC</div>
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary text-[13px] font-semibold text-secondary-foreground shadow-sm">{user ? initials(user.email) : "IN"}</div>
               </div>
 
               <div className="mr-auto flex w-full max-w-4xl items-start gap-3">
@@ -373,7 +374,7 @@ function Index() {
                       <p className="whitespace-pre-wrap break-words">{m.text}</p>
                       <div className="mt-3 flex flex-wrap gap-2">{m.images.map((image) => <a key={image.id} href={image.src} target="_blank" rel="noreferrer"><img src={image.src} alt={image.text} className="h-24 w-24 rounded-md border border-slate-line object-cover" /></a>)}</div>
                     </div>
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary text-[13px] font-semibold text-secondary-foreground">EC</div>
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary text-[13px] font-semibold text-secondary-foreground">{user ? initials(user.email) : "IN"}</div>
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-md">
