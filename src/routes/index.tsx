@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { canSubmitVerification, isImageFile } from "@/lib/submission";
+import { AuthModal } from "@/components/AuthModal";
+import { initials, loadHistory, loadUser, mockLogin, mockLogout, saveHistory, type Investigation, type MockUser } from "@/lib/mock-auth";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -51,13 +53,14 @@ const metrics = [
   { label: "Sources croisées", value: "8 registres", cls: "text-primary" },
 ];
 
-const recent = ["Déclaration Électorale Cotonou", "Subventions Agricoles 2024", "Inauguration CHU Calavi"];
-
 type Chip = { id: number; type: "image" | "link"; text: string; src: string };
 type Message = { text: string; images: Chip[] };
 
 function Index() {
-  const [active, setActive] = useState<number | null>(null);
+  const [user, setUser] = useState<MockUser | null>(null);
+  const [history, setHistory] = useState<Investigation[]>([]);
+  const [currentId, setCurrentId] = useState<string | null>(null);
+  const [authMode, setAuthMode] = useState<"signin" | "signup" | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [showExample, setShowExample] = useState(false);
   const [attachmentError, setAttachmentError] = useState("");
@@ -69,13 +72,18 @@ function Index() {
   const [vote, setVote] = useState<"up" | "down" | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    const u = loadUser();
+    if (u) { setUser(u); setHistory(loadHistory(u.email)); }
+  }, []);
+
   const addChip = (type: Chip["type"], text: string, src: string) => {
     setChips((c) => [...c, { id: Date.now() + Math.random(), type, text, src }]);
     setAttachmentError("");
   };
   const canSend = canSubmitVerification(input, chips.length) && !validatingImage;
   const reset = () => {
-    setSent([]); setInput(""); setChips([]); setActive(null); setShowExample(false); setAttachmentError("");
+    setSent([]); setInput(""); setChips([]); setCurrentId(null); setShowExample(false); setAttachmentError("");
   };
   const attachUrl = () => {
     const value = prompt("Collez l’URL publique d’une image :", "https://");
@@ -111,9 +119,31 @@ function Index() {
 
   const submit = () => {
     if (!canSend) return;
-    setSent((s) => [...s, { text: input.trim(), images: [...chips] }]);
+    const next = [...sent, { text: input.trim(), images: [...chips] }];
+    setSent(next);
+    setShowExample(false);
     setInput("");
     setChips([]);
+    if (user) {
+      const id = currentId ?? `inv-${Date.now().toString(36)}`;
+      const existing = history.find((h) => h.id === id);
+      const item: Investigation = { id, title: existing?.title ?? (next[0]?.text ?? "Enquête").slice(0, 60), messages: next, updatedAt: Date.now() };
+      const list = [item, ...history.filter((h) => h.id !== id)];
+      setHistory(list);
+      setCurrentId(id);
+      saveHistory(user.email, list);
+    }
+  };
+
+  const openInvestigation = (h: Investigation) => {
+    setCurrentId(h.id); setSent(h.messages); setShowExample(false); setInput(""); setChips([]); setAttachmentError("");
+  };
+  const login = (email: string) => {
+    const u = mockLogin(email);
+    setUser(u); setHistory(loadHistory(u.email)); setAuthMode(null);
+  };
+  const logout = () => {
+    mockLogout(); setUser(null); setHistory([]); reset();
   };
 
   const copy = () => {
@@ -139,11 +169,17 @@ function Index() {
 
   return (
     <div className="min-h-screen bg-surface font-sans text-foreground">
-      <header className="fixed inset-x-0 top-0 z-50 flex h-16 items-center border-b border-slate-line bg-surface px-4">
+      <header className="fixed inset-x-0 top-0 z-50 flex h-16 items-center justify-between border-b border-slate-line bg-surface px-4">
         <Button variant="ghost" onClick={() => setSidebarOpen((open) => !open)} aria-label={sidebarOpen ? "Réduire le menu" : "Ouvrir le menu"} aria-expanded={sidebarOpen} aria-controls="verification-sidebar" title={sidebarOpen ? "Réduire le menu" : "Ouvrir le menu"} className="h-11 gap-3 px-2">
           <Icon name={sidebarOpen ? "menu_open" : "menu"} className="text-[24px] text-on-variant" />
           <img src={LOGO} alt="Oluyẹwo" className="h-8 max-w-[180px] object-contain" />
         </Button>
+        {!user && (
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" onClick={() => setAuthMode("signin")} className="text-sm font-semibold text-on-variant">Se connecter</Button>
+            <Button onClick={() => setAuthMode("signup")} className="hidden rounded-lg text-sm font-semibold sm:inline-flex">Créer un compte</Button>
+          </div>
+        )}
       </header>
       <aside id="verification-sidebar" inert={!sidebarOpen} className={`fixed bottom-0 left-0 top-16 z-40 overflow-hidden border-r border-slate-line bg-surface-low px-0 py-6 transition-[width,transform] duration-300 motion-reduce:transition-none ${sidebarOpen ? "w-72 translate-x-0" : "w-0 -translate-x-full border-r-0"}`}>
         <div className="flex w-72 flex-col gap-6 px-2">
@@ -156,24 +192,40 @@ function Index() {
               Nouvelle vérification
             </Button>
           </div>
-          <div className="flex flex-col gap-2 px-2">
-            <span className="px-2 text-sm font-semibold uppercase tracking-wider text-outline">Enquêtes Récentes</span>
-            <nav className="flex flex-col gap-2">
-              {recent.map((r, i) => (
-                <Button variant="ghost"
-                  key={r}
-                  onClick={() => { setActive(i); setShowExample(true); setSent([]); }}
-                  className={`truncate rounded-lg px-3 py-3 text-left text-base transition-colors ${
-                    active === i ? "bg-surface-highest text-foreground" : "text-on-variant hover:bg-surface-high hover:text-foreground"
-                  }`}
-                >
-                  {r}
-                </Button>
-              ))}
-            </nav>
-          </div>
+          {user ? (
+            <div className="flex flex-col gap-2 px-2">
+              <span className="px-2 text-sm font-semibold uppercase tracking-wider text-outline">Enquêtes Récentes</span>
+              <nav className="flex flex-col gap-1">
+                {history.length === 0 && <p className="px-2 text-sm text-on-variant">Aucune enquête enregistrée pour le moment.</p>}
+                {history.map((h) => (
+                  <Button variant="ghost" key={h.id} onClick={() => openInvestigation(h)} title={h.title}
+                    className={`justify-start truncate rounded-lg px-3 py-3 text-left text-base transition-colors ${currentId === h.id ? "bg-surface-highest text-foreground" : "text-on-variant hover:bg-surface-high hover:text-foreground"}`}>
+                    <span className="truncate">{h.title}</span>
+                  </Button>
+                ))}
+              </nav>
+            </div>
+          ) : (
+            <div className="mx-2 flex flex-col gap-3 rounded-xl border border-slate-line bg-surface p-4">
+              <Icon name="history" className="text-[22px] text-primary" />
+              <p className="text-sm leading-relaxed text-on-variant">Connectez-vous ou inscrivez-vous pour sauvegarder vos enquêtes.</p>
+              <Button onClick={() => setAuthMode("signin")} className="rounded-lg font-semibold">Se connecter</Button>
+            </div>
+          )}
         </div>
+        {user && (
+          <div className="absolute inset-x-0 bottom-0 w-72 border-t border-slate-line bg-surface-low p-3">
+            <div className="flex items-center gap-3 px-1">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-[13px] font-semibold text-primary-foreground">{initials(user.email)}</div>
+              <span className="min-w-0 flex-1 truncate text-sm font-medium">{user.email}</span>
+              <Button variant="ghost" onClick={logout} title="Se déconnecter" aria-label="Se déconnecter" className="h-9 px-2 text-on-variant hover:text-destructive">
+                <Icon name="logout" className="text-[20px]" />
+              </Button>
+            </div>
+          </div>
+        )}
       </aside>
+      {authMode && <AuthModal initialMode={authMode} onClose={() => setAuthMode(null)} onLogin={login} />}
 
       <div className={`transition-[padding] duration-300 motion-reduce:transition-none ${sidebarOpen ? "md:pl-72" : "pl-0"}`}>
         <main className="relative w-full pt-16">
@@ -187,6 +239,7 @@ function Index() {
                   <div className="flex flex-wrap justify-center gap-5 text-sm text-on-variant">
                     <span className="inline-flex items-center gap-2"><Icon name="image" className="text-[18px] text-primary" />Image : fichier ou URL</span>
                     <span className="inline-flex items-center gap-2"><Icon name="notes" className="text-[18px] text-primary" />Rumeur / texte</span>
+                    <button onClick={() => setShowExample(true)} className="inline-flex items-center gap-2 font-semibold text-primary hover:underline"><Icon name="visibility" className="text-[18px]" />Voir un exemple</button>
                   </div>
                 </div>
               )}
@@ -221,7 +274,7 @@ function Index() {
                   </div>
                   <span className="text-[11px] font-semibold text-outline">Envoyé via Web Client • 14:32</span>
                 </div>
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary text-[13px] font-semibold text-secondary-foreground shadow-sm">EC</div>
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary text-[13px] font-semibold text-secondary-foreground shadow-sm">{user ? initials(user.email) : "IN"}</div>
               </div>
 
               <div className="mr-auto flex w-full max-w-4xl items-start gap-3">
@@ -321,7 +374,7 @@ function Index() {
                       <p className="whitespace-pre-wrap break-words">{m.text}</p>
                       <div className="mt-3 flex flex-wrap gap-2">{m.images.map((image) => <a key={image.id} href={image.src} target="_blank" rel="noreferrer"><img src={image.src} alt={image.text} className="h-24 w-24 rounded-md border border-slate-line object-cover" /></a>)}</div>
                     </div>
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary text-[13px] font-semibold text-secondary-foreground">EC</div>
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary text-[13px] font-semibold text-secondary-foreground">{user ? initials(user.email) : "IN"}</div>
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-md">
