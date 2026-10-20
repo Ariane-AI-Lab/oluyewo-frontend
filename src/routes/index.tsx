@@ -127,7 +127,7 @@ function Index() {
     if (user) {
       const id = currentId ?? `inv-${Date.now().toString(36)}`;
       const existing = history.find((h) => h.id === id);
-      const item: Investigation = { id, title: existing?.title ?? next[0].text.slice(0, 60), messages: next, updatedAt: Date.now() };
+      const item: Investigation = { id, title: existing?.title ?? (next[0]?.text ?? "Enquête").slice(0, 60), messages: next, updatedAt: Date.now() };
       const list = [item, ...history.filter((h) => h.id !== id)];
       setHistory(list);
       setCurrentId(id);
