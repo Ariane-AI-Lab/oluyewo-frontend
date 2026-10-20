@@ -11,3 +11,4 @@
 
 - Keep verification submission eligibility in a shared browser-safe helper used by the send handler and disabled state, so both enforce the same requirement.
 - Keep welcome, example investigations, and submitted conversations as explicit client UI states; do not represent the example verdict as a live verification service.
+- Login and history are front-end mocks in src/lib/mock-auth.ts (localStorage) by user request; swap that module for a real backend later.
