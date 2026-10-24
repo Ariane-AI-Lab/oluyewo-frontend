@@ -24,3 +24,9 @@ cd <repository-name>
 npm i
 npm run dev
 ```
+
+## Backend API
+
+The verification form sends the rumor text and one image (an uploaded file or a public image URL) to the FastAPI streaming endpoint `POST /verify-rumor/stream`. Configure the backend origin with `VITE_API_BASE_URL`; it defaults to `http://localhost:8000` for local development. The backend must allow requests from the frontend origin through CORS.
+
+Login and investigation history currently remain front-end-only mocks stored in the browser.

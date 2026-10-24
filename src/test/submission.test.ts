@@ -12,6 +12,9 @@ describe("Mandatory image and text", () => {
   it("accepts text with an uploaded image or validated image URL", () => {
     expect(canSubmitVerification("Une rumeur", 1)).toBe(true);
   });
+  it("rejects more than one image because the API accepts a file or a URL, not both", () => {
+    expect(canSubmitVerification("Une rumeur", 2)).toBe(false);
+  });
   it("accepts image files but rejects non-image attachments", () => {
     expect(isImageFile({ type: "image/png" })).toBe(true);
     expect(isImageFile({ type: "application/pdf" })).toBe(false);
