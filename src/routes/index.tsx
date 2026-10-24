@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { canSubmitVerification, isImageFile } from "@/lib/submission";
 import { submitVerification, type VerificationResponse } from "@/lib/verification-api";
 import { AuthModal } from "@/components/AuthModal";
@@ -38,36 +39,33 @@ const Icon = ({ name, className = "" }: { name: string; className?: string }) =>
   <span className={`material-symbols-outlined ${className}`}>{name}</span>
 );
 
-const SourceChip = ({ href, icon, children }: { href: string; icon: string; children: ReactNode }) => (
-  <a
-    href={href}
-    target="_blank"
-    rel="noreferrer"
-    className="mx-0.5 inline-flex items-center gap-0.5 rounded border border-slate-line/60 bg-surface-slate px-1 align-baseline text-[10px] leading-[14px] font-medium text-on-variant transition-colors hover:text-primary"
-  >
-    <Icon name={icon} className="text-[10px]" />
-    {children}
-  </a>
-);
-
 const sources = [
   { href: "https://sgg.gouv.bj/journal-officiel", org: "Journal Officiel Bénin", title: "Recueil des concours & décrets légaux", desc: "Recherche de correspondances d'arrêtés ministériels pour l'exercice 2024-2025.", domain: "sgg.gouv.bj" },
   { href: "https://douanes.gouv.bj/actualites/dementi", org: "Douanes Béninoises", title: "Alerte officielle : Tentative d'escroquerie", desc: "Mise en garde contre les faux avis de recrutement via Mobile Money.", domain: "douanes.gouv.bj" },
   { href: "https://beninwebtv.com/factcheck-douane", org: "Fact-Check Média", title: "Analyse médico-légale du cachet", desc: "Examen de superposition montrant le détournement d'une note de 2021.", domain: "beninwebtv.com" },
 ];
 
-const metrics = [
-  { label: "Niveau de confiance", value: "98%", cls: "text-primary" },
-  { label: "Authenticité image (ELA)", value: "2% (falsifié)", cls: "text-tertiary" },
-  { label: "Temps d'analyse", value: "1.2s", cls: "text-foreground" },
-  { label: "Sources croisées", value: "8 registres", cls: "text-primary" },
-];
-
-const exampleShareText =
-  "Cette image est détournée de son contexte. Le communiqué de recrutement partagé est une fabrication frauduleuse. Sources : sgg.gouv.bj, douanes.gouv.bj et beninwebtv.com.";
+const exampleReport: VerificationResponse = {
+  resultat_utilisateur: {
+    resume:
+      "Exemple de démonstration : cette image est présentée comme détournée de son contexte. Le communiqué de recrutement évoqué dans cet exemple est signalé comme frauduleux. Consultez les sources citées pour voir comment un rapport peut être présenté.",
+    sources: sources.map((source) => ({
+      url: source.href,
+      title: source.org,
+      description: source.desc,
+    })),
+    donnees_techniques: {
+      classe_ooc: "ooc",
+      score_semantique: 0.98,
+      classe_visual: "falsifie",
+      score_visual: 0.02,
+    },
+  },
+  classe_ooc: "ooc",
+};
 
 const actionBtn =
-  "flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[13px] text-on-variant transition-colors hover:bg-surface-low hover:text-foreground";
+  "flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs text-on-variant transition-colors hover:bg-surface-low hover:text-foreground sm:px-2.5 sm:text-[13px]";
 
 type Chip = { id: number; type: "image" | "link"; text: string; src: string };
 type Message = StoredMessage & { status?: string; error?: string };
@@ -312,21 +310,21 @@ const VerificationReport = ({
   return (
     <div className="flex w-full flex-col gap-3">
       {proofs.length > 0 && (
-        <div className="flex snap-x gap-3 overflow-x-auto pb-1" aria-label="Liens de preuve">
+        <div className="flex snap-x gap-2 overflow-x-auto pb-1 sm:gap-3" aria-label="Liens de preuve">
           {proofs.map((proof) => (
             <a
               key={proof.url}
               href={proof.url}
               target="_blank"
               rel="noreferrer"
-              className="flex w-56 shrink-0 snap-start flex-col gap-2 rounded-xl border border-slate-line bg-surface-lowest p-3 transition-colors hover:bg-surface-low"
+              className="flex w-40 shrink-0 snap-start flex-col gap-1.5 rounded-xl border border-slate-line bg-surface-lowest p-2 transition-colors hover:bg-surface-low sm:w-56 sm:gap-2 sm:p-3"
             >
-              <span className="inline-flex items-center gap-2 text-sm font-semibold">
-                <Icon name="link" className="text-[18px] text-primary" />
+              <span className="inline-flex min-w-0 items-center gap-1.5 text-xs font-semibold sm:gap-2 sm:text-sm">
+                <Icon name="link" className="shrink-0 text-[16px] text-primary sm:text-[18px]" />
                 <span className="truncate">{proof.title}</span>
               </span>
-              {proof.description && <span className="line-clamp-2 text-xs leading-relaxed text-on-variant">{proof.description}</span>}
-              <span className="truncate text-xs text-outline">{new URL(proof.url).hostname}</span>
+              {proof.description && <span className="line-clamp-1 text-[11px] leading-relaxed text-on-variant sm:line-clamp-2 sm:text-xs">{proof.description}</span>}
+              <span className="truncate text-[10px] text-outline sm:text-xs">{new URL(proof.url).hostname}</span>
             </a>
           ))}
         </div>
@@ -339,12 +337,12 @@ const VerificationReport = ({
           </summary>
           <dl className="grid grid-cols-1 gap-2 border-t border-slate-line/60 px-3 py-3 sm:grid-cols-2 lg:grid-cols-3">
             {technicalEntries.map(([key, value]) => (
-              <div key={key} className="flex flex-col gap-1 rounded-lg bg-surface-lowest/70 p-2.5">
+              <div key={key} className="flex flex-col gap-1 rounded-lg bg-surface-lowest/70 p-2 sm:p-2.5">
                 <dt className="flex flex-col text-xs font-semibold text-outline">
                   <span>{technicalLabels[key] ?? key.replace(/[_-]+/g, " ")}</span>
                   {technicalLabels[key] && <span className="font-mono text-[10px] font-normal">{key}</span>}
                 </dt>
-                <dd className="break-words text-base font-medium text-foreground">{formatTechnicalValue(key, value)}</dd>
+                <dd className="break-words text-sm font-medium text-foreground sm:text-base">{formatTechnicalValue(key, value)}</dd>
               </div>
             ))}
           </dl>
@@ -370,6 +368,7 @@ function Index() {
   const [currentId, setCurrentId] = useState<string | null>(null);
   const [authMode, setAuthMode] = useState<"signin" | "signup" | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const isMobile = useIsMobile();
   const [tutorialOpen, setTutorialOpen] = useState(true);
   const [tutorialStep, setTutorialStep] = useState(0);
   const [showExample, setShowExample] = useState(false);
@@ -384,7 +383,6 @@ function Index() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [copied, setCopied] = useState(false);
   const [actionMessage, setActionMessage] = useState("");
-  const [vote, setVote] = useState<"up" | "down" | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const requestController = useRef<AbortController | null>(null);
   const tutorialSteps = 3;
@@ -393,6 +391,10 @@ function Index() {
     const u = loadUser();
     if (u) { setUser(u); setHistory(loadHistory(u.email)); }
   }, []);
+
+  useEffect(() => {
+    if (isMobile) setSidebarOpen(false);
+  }, [isMobile]);
 
   const addChip = (type: Chip["type"], text: string, src: string): boolean => {
     if (chips.length > 0) {
@@ -584,10 +586,10 @@ function Index() {
 
   return (
     <div className="app-canvas min-h-screen font-sans text-foreground">
-      <header className="app-header fixed inset-x-0 top-0 z-50 flex h-16 items-center justify-between border-b border-slate-line px-4">
-        <Button variant="ghost" onClick={() => setSidebarOpen((open) => !open)} aria-label={sidebarOpen ? "Réduire le menu" : "Ouvrir le menu"} aria-expanded={sidebarOpen} aria-controls="verification-sidebar" title={sidebarOpen ? "Réduire le menu" : "Ouvrir le menu"} className="h-11 gap-3 px-2">
+      <header className="app-header fixed inset-x-0 top-0 z-50 flex h-16 items-center justify-between border-b border-slate-line px-3 sm:px-4">
+        <Button variant="ghost" onClick={() => setSidebarOpen((open) => !open)} aria-label={sidebarOpen ? "Réduire le menu" : "Ouvrir le menu"} aria-expanded={sidebarOpen} aria-controls="verification-sidebar" title={sidebarOpen ? "Réduire le menu" : "Ouvrir le menu"} className="h-11 gap-2 px-2 sm:gap-3">
           <Icon name={sidebarOpen ? "menu_open" : "menu"} className="text-[24px] text-on-variant" />
-          <img src={LOGO} alt="Oluyẹwo" className="h-8 max-w-[180px] object-contain" />
+          <img src={LOGO} alt="Oluyẹwo" className="h-8 max-w-28 object-contain sm:max-w-[180px]" />
         </Button>
         {user ? (
           <Link
@@ -605,6 +607,14 @@ function Index() {
           </div>
         )}
       </header>
+      {sidebarOpen && isMobile && (
+        <button
+          type="button"
+          aria-label="Fermer le menu"
+          onClick={() => setSidebarOpen(false)}
+          className="fixed inset-0 z-[35] bg-foreground/25 md:hidden"
+        />
+      )}
       <aside id="verification-sidebar" inert={!sidebarOpen} className={`fixed bottom-0 left-0 top-16 z-40 overflow-hidden border-r border-slate-line bg-surface-low/95 px-0 py-6 shadow-sm backdrop-blur-xl transition-[width,transform] duration-300 motion-reduce:transition-none ${sidebarOpen ? "w-72 translate-x-0" : "w-0 -translate-x-full border-r-0"}`}>
         <div className="flex w-72 flex-col gap-6 px-2">
           <div className="px-2 pt-3">
@@ -649,7 +659,7 @@ function Index() {
 
       <div className={`transition-[padding] duration-300 motion-reduce:transition-none ${sidebarOpen ? "md:pl-72" : "pl-0"}`}>
         <main className="relative w-full pt-16">
-          <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-12 px-6 py-6 pb-64">
+          <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-12 px-3 py-6 pb-64 sm:px-6">
             <section className="flex flex-col gap-6">
               {!showExample && sent.length === 0 && (
                 <div className="mx-auto flex w-full max-w-3xl flex-col items-center gap-5 py-10 text-center sm:py-16">
@@ -678,7 +688,7 @@ function Index() {
                     role="dialog"
                     aria-modal="true"
                     aria-labelledby="tutorial-title"
-                    className="w-full max-w-md overflow-hidden rounded-3xl border border-slate-line/80 bg-surface-lowest shadow-2xl shadow-foreground/20"
+                    className="max-h-full w-full max-w-md overflow-y-auto rounded-3xl border border-slate-line/80 bg-surface-lowest shadow-2xl shadow-foreground/20"
                   >
                     <div className="flex items-center justify-between border-b border-slate-line/70 px-5 py-4">
                       <div className="flex items-center gap-2">
@@ -779,141 +789,56 @@ function Index() {
                   </section>
                 </div>
               )}
-              {showExample && <>
-              <div className="my-2 flex items-center gap-3">
-                <div className="h-px flex-grow bg-surface-high" />
-                <span className="rounded-full bg-surface-low px-2 py-1 text-[12px] font-semibold text-on-variant">
-                  Aujourd'hui, 14:32 • Dossier vérification #BJ-2025-994
-                </span>
-                <div className="h-px flex-grow bg-surface-high" />
-              </div>
+              {showExample && (
+                <div className="flex flex-col gap-4 sm:gap-6">
+                  <div className="flex justify-center">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-low px-3 py-1 text-[11px] font-semibold text-on-variant sm:text-xs">
+                      <Icon name="info" className="text-[15px] text-primary" />
+                      Exemple illustratif — résultat fictif
+                    </span>
+                  </div>
 
-              <div className="ml-auto flex max-w-3xl items-start justify-end gap-3">
-                <div className="flex w-full flex-col items-end gap-2">
-                  <div className="rounded-2xl rounded-tr-none bg-surface-highest p-6 shadow-sm">
-                    <p className="text-base">
-                      Ce communiqué annonçant un concours de recrutement direct à la douane béninoise pour ce weekend est-il authentique ?
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2 rounded-xl bg-surface-lowest p-2 pr-6 shadow-sm transition-shadow hover:shadow-md">
-                    <a href={DOC} target="_blank" rel="noreferrer" className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-surface-high">
-                      <img src={DOC} alt="Communiqué de recrutement des douanes soumis" className="h-full w-full object-cover" />
-                      <div className="absolute inset-0 flex items-center justify-center bg-foreground/10">
-                        <Icon name="zoom_in" className="text-[18px] text-surface-lowest" />
+                  <div className="ml-auto flex w-full max-w-3xl items-start justify-end gap-2 sm:gap-3">
+                    <div className="flex min-w-0 flex-col items-end gap-2">
+                      <div className="max-w-full rounded-2xl rounded-tr-none bg-surface-highest p-3 shadow-sm sm:p-4">
+                        <p className="break-words text-sm sm:text-base">
+                          Ce communiqué annonçant un concours de recrutement direct à la douane béninoise pour ce weekend est-il authentique ?
+                        </p>
                       </div>
-                    </a>
-                    <div className="flex min-w-0 flex-col">
-                      <span className="truncate text-sm font-semibold">communique_douane_recrutement.jpg</span>
-                      <span className="text-[12px] font-semibold text-on-variant">240 Ko • Document JPEG soumis</span>
+                      <a href={DOC} target="_blank" rel="noreferrer" className="flex max-w-full items-center gap-2 rounded-xl border border-slate-line bg-surface-lowest p-2 shadow-sm">
+                        <img src={DOC} alt="Communiqué de recrutement des douanes soumis" className="h-10 w-10 shrink-0 rounded-lg object-cover sm:h-14 sm:w-14" />
+                        <span className="min-w-0">
+                          <span className="block truncate text-xs font-semibold sm:text-sm">communique_douane_recrutement.jpg</span>
+                          <span className="block text-[10px] text-on-variant sm:text-xs">240 Ko · Document JPEG</span>
+                        </span>
+                      </a>
                     </div>
-                    <Icon name="task_alt" className="ml-3 text-[20px] text-primary" />
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-semibold text-secondary-foreground sm:h-9 sm:w-9">
+                      {user ? initials(user.email, user.nom, user.prenom) : "IN"}
+                    </div>
                   </div>
-                  <span className="text-[11px] font-semibold text-outline">Envoyé via Web Client • 14:32</span>
+
+                  <div className="mr-auto flex w-full max-w-4xl items-start gap-2 sm:gap-3">
+                    <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-md sm:h-10 sm:w-10 sm:rounded-2xl">
+                      <Icon name="smart_toy" className="text-[19px] sm:text-[22px]" />
+                    </div>
+                    <div className="min-w-0 flex-1 space-y-2 sm:space-y-3">
+                      <VerificationSummary report={exampleReport} />
+                      <VerificationReport
+                        report={exampleReport}
+                        onCopy={copy}
+                        onShare={share}
+                        copied={copied}
+                      />
+                    </div>
+                  </div>
                 </div>
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary text-[13px] font-semibold text-secondary-foreground shadow-sm">{user ? initials(user.email, user.nom, user.prenom) : "IN"}</div>
-              </div>
-
-              <div className="mr-auto flex w-full max-w-4xl items-start gap-3">
-                <div className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-md">
-                  <Icon name="smart_toy" className="text-[22px]" />
-                </div>
-                <div className="flex w-full flex-col gap-6 pt-1">
-                  <div className="flex flex-col gap-4 leading-relaxed">
-                    <p className="text-[17px] leading-relaxed">
-                      <strong className="font-semibold text-primary">Cette image est détournée de son contexte.</strong> Le communiqué partagé sur les réseaux sociaux annonçant une session de recrutement direct de 500 agents à la Direction Générale des Douanes béninoises pour ce week-end est une <strong className="font-semibold">fabrication frauduleuse</strong>. Aucun acte réglementaire ni arrêté portant ouverture de concours de cette nature n'a été publié dans les registres légaux officiels
-                      <SourceChip href="https://sgg.gouv.bj/journal-officiel" icon="public">JORB · gouv.bj</SourceChip>.
-                    </p>
-                    <p className="text-base leading-relaxed text-on-variant">
-                      La Direction Générale des Douanes et Droits Indirects a publié un démenti formel confirmant qu'aucun dépôt de dossier avec frais d'inscription payables via Mobile Money n'est requis par l'administration béninoise
-                      <SourceChip href="https://douanes.gouv.bj/actualites/dementi" icon="account_balance">douanes.gouv.bj</SourceChip>. Les analyses médico-légales de la capture d'écran révèlent un montage utilisant des en-têtes et cachets numérisés provenant d'un avis d'affectation officiel daté de 2021
-                      <SourceChip href="https://beninwebtv.com/factcheck-douane" icon="newspaper">Bénin Web TV</SourceChip>.
-                    </p>
-                  </div>
-
-                  <div className="flex flex-col gap-3 pt-2">
-                    <div className="flex items-center gap-2 text-[13px] font-semibold uppercase tracking-wider text-outline">
-                      <Icon name="verified" className="text-[16px] text-primary" />
-                      Sources &amp; preuves vérifiées
-                    </div>
-                    <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-                      {sources.map((s) => (
-                        <a key={s.href} href={s.href} target="_blank" rel="noopener noreferrer" className="group flex flex-col justify-between gap-2 rounded-xl border border-slate-line bg-surface-lowest p-3 transition-all hover:bg-surface-low hover:shadow-sm">
-                          <div className="flex flex-col gap-1">
-                            <div className="flex items-center justify-between text-[11px] font-medium text-outline">
-                              <span>{s.org}</span>
-                              <Icon name="arrow_outward" className="text-[14px] text-primary transition-transform group-hover:translate-x-0.5" />
-                            </div>
-                            <div className="text-[13px] font-semibold leading-snug">{s.title}</div>
-                            <p className="line-clamp-2 text-[12px] text-on-variant">{s.desc}</p>
-                          </div>
-                          <span className="font-mono text-[11px] text-primary">{s.domain}</span>
-                        </a>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-1 border-t border-slate-line/60 pt-1">
-                    <Button variant="ghost" onClick={() => copy(exampleShareText)} className={actionBtn}>
-                      <Icon name={copied ? "check" : "content_copy"} className="text-[18px]" />
-                      {copied ? "Copié !" : "Copier"}
-                    </Button>
-                    <Button variant="ghost" onClick={() => share(exampleShareText)} className={actionBtn}>
-                      <Icon name="share" className="text-[18px]" />
-                      Partager
-                    </Button>
-                    <div className="mx-1 h-4 w-px bg-slate-line" />
-                    <Button variant="ghost" onClick={() => setVote("up")} title="Réponse utile" className={`rounded-lg p-1.5 hover:bg-surface-low hover:text-primary ${vote === "up" ? "text-primary" : "text-on-variant"}`}>
-                      <Icon name="thumb_up" className="text-[18px]" />
-                    </Button>
-                    <Button variant="ghost" onClick={() => setVote("down")} title="Réponse inexacte" className={`rounded-lg p-1.5 hover:bg-surface-low hover:text-destructive ${vote === "down" ? "text-destructive" : "text-on-variant"}`}>
-                      <Icon name="thumb_down" className="text-[18px]" />
-                    </Button>
-                  </div>
-
-                  <details className="group overflow-hidden rounded-xl border border-slate-line bg-surface-lowest">
-                    <summary className="flex cursor-pointer list-none select-none items-center justify-between px-4 py-2.5 text-[13px] font-medium text-on-variant hover:bg-surface-low/50 hover:text-foreground">
-                      <div className="flex items-center gap-2">
-                        <Icon name="psychology" className="text-[18px] text-primary" />
-                        Afficher la réflexion approfondie et les métriques
-                      </div>
-                      <Icon name="expand_more" className="text-[18px] transition-transform duration-200 group-open:rotate-180" />
-                    </summary>
-                    <div className="flex flex-col gap-3 border-t border-slate-line bg-surface-slate px-4 py-3.5 text-[12px] text-on-variant">
-                      <div className="grid grid-cols-2 gap-2.5 md:grid-cols-4">
-                        {metrics.map((m) => (
-                          <div key={m.label} className="flex flex-col gap-0.5 rounded-lg border border-slate-line bg-surface-lowest p-2.5">
-                            <span className="text-[11px] font-semibold text-outline">{m.label}</span>
-                            <span className={`text-[15px] font-bold ${m.cls}`}>{m.value}</span>
-                          </div>
-                        ))}
-                      </div>
-                      <div className="flex flex-col gap-1 rounded-lg border border-slate-line bg-surface-lowest p-3 font-mono text-[11px] leading-relaxed">
-                        <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-primary">
-                          <Icon name="terminal" className="text-[13px]" />
-                          Traces des agents de vérification
-                        </div>
-                        <p>• Extraction des entités : « Concours Douane Bénin 2025 », « Avis de recrutement direct ».</p>
-                        <p>• Interrogation JORB (sgg.gouv.bj) : 0 résultat trouvé correspondant à un arrêté ministériel d'ouverture.</p>
-                        <p>• Détection ELA : discordance nette de compression sur la signature et le cachet rond officiel.</p>
-                        <p>• Statut de convergence : 98% certitude de contrefaçon.</p>
-                      </div>
-                    </div>
-                  </details>
-                </div>
-              </div>
-
-              </>}
+              )}
               {sent.map((m, i) => (
                 <div key={m.id ?? i} className="flex flex-col gap-6">
                   <div className="ml-auto flex w-full max-w-3xl flex-col items-end gap-2">
-                    <div className="flex max-w-full items-start gap-3">
-                      <div className="min-w-0 rounded-lg bg-surface-highest p-4 shadow-sm">
-                        <p className="whitespace-pre-wrap break-words text-base">{m.text}</p>
-                      </div>
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary text-[13px] font-semibold text-secondary-foreground">{user ? initials(user.email, user.nom, user.prenom) : "IN"}</div>
-                    </div>
                     {m.images.length > 0 && (
-                      <div className="flex max-w-full flex-wrap justify-end gap-2 pr-12">
+                      <div className="flex max-w-full flex-wrap justify-end gap-2">
                         {m.images.map((image) => (
                           <a key={image.id} href={image.src} target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-xl border border-slate-line bg-surface-lowest p-2 shadow-sm">
                             <img src={image.src} alt={image.text} className="h-20 w-20 rounded-md object-cover" />
@@ -922,6 +847,12 @@ function Index() {
                         ))}
                       </div>
                     )}
+                    <div className="flex max-w-full items-start gap-3">
+                      <div className="min-w-0 rounded-lg bg-surface-highest p-4 shadow-sm">
+                        <p className="whitespace-pre-wrap break-words text-base">{m.text}</p>
+                      </div>
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary text-[13px] font-semibold text-secondary-foreground">{user ? initials(user.email, user.nom, user.prenom) : "IN"}</div>
+                    </div>
                   </div>
                   <div className="mr-auto flex w-full max-w-4xl items-start gap-3">
                     <div className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-md">
@@ -962,7 +893,7 @@ function Index() {
             </section>
           </div>
 
-          <div className={`app-composer fixed bottom-0 right-0 z-30 px-4 pb-5 pt-4 transition-[left] duration-300 motion-reduce:transition-none ${sidebarOpen ? "left-0 md:left-72" : "left-0"}`}>
+          <div className={`app-composer fixed bottom-0 right-0 z-30 px-3 pb-5 pt-3 sm:px-4 sm:pt-4 transition-[left] duration-300 motion-reduce:transition-none ${sidebarOpen ? "left-0 md:left-72" : "left-0"}`}>
             <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-2">
               {chips.length > 0 && (
                 <div className="flex flex-wrap items-center gap-2">
